@@ -246,9 +246,8 @@ def get_Js(f_A, f_B=f_B_def,
                 IA_vBs = np.append(IA_vBs, [[0]] * (i * ts_per_tstep + 1), 1)
                 RA_Bs = np.append(RA_Bs, np.transpose([Rw_B]), 1)
 
-                SA_1As[-1,-1] -= Sw_1A[-1] / (Sw_1A[-1] + Sw_2A[-1]) * init
-                SA_2As[-1,-1] -= Sw_2A[-1] / (Sw_1A[-1] + Sw_2A[-1]) * init
-                if SA_1As[-1,-1] < 0 or SA_2As[-1,-1] < 0:
+                SA_1As[-1,-1] -= init
+                if SA_1As[-1,-1] < 0:
                     raise Exception("Not enough susceptibles in country A for variant to emerge")
 
                 y0[13:(13 + 10*kA)] = \
@@ -282,9 +281,8 @@ def get_Js(f_A, f_B=f_B_def,
                 IB_vBs = np.append(IB_vBs, [[0]] * i * ts_per_tstep + [[init]], 1)
                 RB_Bs = np.append(RB_Bs, np.transpose([Rw_B]), 1)
                 
-                SB_1Bs[-1,-1] -= Sw_1B[-1] / (Sw_1B[-1] + Sw_2B[-1]) * init
-                SB_2Bs[-1,-1] -= Sw_2B[-1] / (Sw_1B[-1] + Sw_2B[-1]) * init
-                if SB_1Bs[-1,-1] < 0 or SB_2Bs[-1,-1] < 0:
+                SB_1Bs[-1,-1] -= init
+                if SB_1Bs[-1,-1] < 0:
                     raise Exception("Not enough susceptibles in country B for variant to emerge")
 
                 y0[(13 + 10*kA):(13 + 10*kA + 10*kB)] = \
