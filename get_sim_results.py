@@ -248,7 +248,7 @@ def get_Js(f_A, f_B=f_B_def,
 
                 SA_1As[-1,-1] -= init
                 if SA_1As[-1,-1] < 0:
-                    raise Exception("Not enough susceptibles in country A for variant to emerge")
+                    raise Exception('Not enough susceptibles in country A for variant to emerge')
 
                 y0[13:(13 + 10*kA)] = \
                     np.concatenate((SA_1As[-1], SA_2As[-1], IA_wAs[-1], IA_vAs[-1], RA_As[-1],
@@ -283,7 +283,7 @@ def get_Js(f_A, f_B=f_B_def,
                 
                 SB_1Bs[-1,-1] -= init
                 if SB_1Bs[-1,-1] < 0:
-                    raise Exception("Not enough susceptibles in country B for variant to emerge")
+                    raise Exception('Not enough susceptibles in country B for variant to emerge')
 
                 y0[(13 + 10*kA):(13 + 10*kA + 10*kB)] = \
                     np.concatenate((SB_1As[-1], SB_2As[-1], IB_wAs[-1], IB_vAs[-1], RB_As[-1],
@@ -326,11 +326,11 @@ def get_Cs(f_A, f_B=f_B_def,
            tstep=7, tsteps=2000, ts_per_tstep=1, approx_inf_t=True, approx_frac=.1):
     
     ts, J_A, J_B = get_Js(f_A, f_B,
-                             beta, gamma, lambd,
-                             sigma, mu, phi,
-                             nu, eta,
-                             pop_size, epsilon,
-                             tstep, tsteps, ts_per_tstep, track_vars=False)
+                          beta, gamma, lambd,
+                          sigma, mu, phi,
+                          nu, eta,
+                          pop_size, epsilon,
+                          tstep, tsteps, ts_per_tstep, track_vars=False)
     
     def calc_C_A(delt, rh):
         C_A = sum(np.exp(-delt*ts) * ((1-rh) * J_A + rh * J_B))
@@ -356,16 +356,108 @@ def get_Cs(f_A, f_B=f_B_def,
         else:
             return [[calc_C_A(delt, rh) for rh in rho] for delt in delta], [[calc_C_B(delt, rh) for rh in rho] for delt in delta]
 
+### same as get_Cs, but just returns C_A
+def get_C_A(f_A, f_B=f_B_def,
+            delta=delta_def, rho=rho_def,
+            beta=beta_def, gamma=gamma_def, lambd=lambda_def,
+            sigma=sigma_def, mu=mu_def, phi=None,
+            nu=nu_def, eta=eta_def,
+            pop_size=pop_size_def, epsilon=epsilon_def,
+            tstep=7, tsteps=2000, ts_per_tstep=1, approx_inf_t=True, approx_frac=.1):
+    
+    ts, J_A, J_B = get_Js(f_A, f_B,
+                          beta, gamma, lambd,
+                          sigma, mu, phi,
+                          nu, eta,
+                          pop_size, epsilon,
+                          tstep, tsteps, ts_per_tstep, track_vars=False)
+    
+    def calc_C_A(delt, rh):
+        C_A = sum(np.exp(-delt*ts) * ((1-rh) * J_A + rh * J_B))
+        if approx_inf_t:
+            C_A += np.exp(-delt*(ts[-1]+tstep)) / (1 - np.exp(-delt*tstep)) * \
+                   np.mean((1-rh) * J_A[-int(approx_frac * len(ts)):] + rh * J_B[-int(approx_frac * len(ts)):])
+        return C_A
+    
+    if isinstance(delta, (float,int)):
+        if isinstance(rho, (float,int)):
+            return calc_C_A(delta, rho)
+        else:
+            return [calc_C_A(delta, rh) for rh in rho]
+    else:
+        if isinstance(rho, (float,int)):
+            return [calc_C_A(delt, rho) for delt in delta]
+        else:
+            return [[calc_C_A(delt, rh) for rh in rho] for delt in delta]
 
 
 
-def func(f_B):
-    return [get_Cs(f_A, f_B=f_B, mu=10) for f_A in np.linspace(0,1,201)]
+def parallelize_eta_delta_f_A_mins(eta):
+    deltas = np.linspace(.001,.2,200)
+    f_As = np.sort(np.append(np.linspace(.001,.451,10), np.linspace(.049,.499,10)))
+    return f_As[np.argmin([get_C_A(f_A, delta=deltas/365, eta=eta) for f_A in f_As], axis=0)]
+
+def parallelize_log10mu_delta_f_A_mins(log10mu):
+    deltas = np.linspace(.001,.2,200)
+    f_As = np.sort(np.append(np.linspace(.001,.451,10), np.linspace(.049,.499,10)))
+    return f_As[np.argmin([get_C_A(f_A, delta=deltas/365, mu=10**log10mu) for f_A in f_As], axis=0)]
+
+def parallelize_R0_delta_f_A_mins(R0):
+    deltas = np.linspace(.001,.2,200)
+    f_As = np.sort(np.append(np.linspace(.001,.451,10), np.linspace(.049,.499,10)))
+    return f_As[np.argmin([get_C_A(f_A, delta=deltas/365, beta=R0*gamma_def) for f_A in f_As], axis=0)]
+def parallelize_R0_delta_f_A_min_low_sigmas(R0):
+    deltas = np.linspace(.001,.2,200)
+    f_As = np.sort(np.append(np.linspace(.001,.451,10), np.linspace(.049,.499,10)))
+    return f_As[np.argmin([get_C_A(f_A, delta=deltas/365, beta=R0*gamma_def, sigma=.9) for f_A in f_As], axis=0)]
+
+
+def parallelize_nu_delta_f_A_mins(nu):
+    deltas = np.linspace(.001,.2,200)
+    f_As = np.sort(np.append(np.linspace(.001,.451,10), np.linspace(.049,.499,10)))
+    return f_As[np.argmin([get_C_A(f_A, delta=deltas/365, nu=nu/365) for f_A in f_As], axis=0)]
+
+
+def parallelize_Cs(f_B):
+    f_As = np.linspace(0,1,201)
+    return [get_Cs(f_A, f_B=f_B, mu=5) for f_A in f_As]
+
+
+def parallelize_ps(R0):
+    f_As = np.linspace(0,1,201)
+    return [[p[-1] for p in get_Js(f_A, beta=R0*gamma_def, track_vars=True)[4:7]] for f_A in f_As]
+
+
 
 
 
 if __name__ == '__main__':
-    pool=Pool(processes=30)
-    Cs = pool.map(func, np.linspace(0,1,201))
-    with open('/scratch/gpfs/arisf/Cs.txt', 'w') as f: ### change file path
-        f.write(str(Cs))
+    with Pool(processes=60) as pool:
+
+        etas = np.linspace(0,.2,201)
+        eta_delta_f_A_mins = np.transpose(pool.map(parallelize_eta_delta_f_A_mins, etas))
+        np.save('/scratch/gpfs/arisf/sim_results/eta_delta_f_A_mins.npy', eta_delta_f_A_mins) ### change file path
+
+        log10mus = np.linspace(-1,3,201)
+        log10mu_delta_f_A_mins = np.transpose(pool.map(parallelize_log10mu_delta_f_A_mins, log10mus))
+        np.save('/scratch/gpfs/arisf/sim_results/log10mu_delta_f_A_mins.npy', log10mu_delta_f_A_mins) ### change file path
+
+        R0s = np.linspace(1, 3, 201)
+        R0_delta_f_A_mins = np.transpose(pool.map(parallelize_R0_delta_f_A_mins, R0s))
+        np.save('/scratch/gpfs/arisf/sim_results/R0_delta_f_A_mins.npy', R0_delta_f_A_mins) ### change file path
+        R0_delta_f_A_min_low_sigmas = np.transpose(pool.map(parallelize_R0_delta_f_A_min_low_sigmas, R0s))
+        np.save('/scratch/gpfs/arisf/sim_results/R0_delta_f_A_min_low_sigmas.npy', R0_delta_f_A_min_low_sigmas) ### change file path
+
+        nus = np.linspace(.5,2.5,201)
+        nu_delta_f_A_mins = np.transpose(pool.map(parallelize_nu_delta_f_A_mins, nus))
+        np.save('/scratch/gpfs/arisf/sim_results/nu_delta_f_A_mins.npy', nu_delta_f_A_mins) ### change file path
+
+
+        f_Bs = np.linspace(0,1,201)
+        Cs = pool.map(parallelize_Cs, f_Bs)
+        np.save('/scratch/gpfs/arisf/sim_results/Cs.npy', Cs) ### change file path
+
+
+        ps = pool.map(parallelize_ps, R0s)
+        np.save('/scratch/gpfs/arisf/sim_results/ps.npy', ps) ### change file path
+
