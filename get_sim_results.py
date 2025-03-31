@@ -423,9 +423,13 @@ def parallelize_Cs(f_B):
     return [get_Cs(f_A, f_B=f_B, mu=5) for f_A in f_As]
 
 
-def parallelize_ps(R0):
+def parallelize_f_A_R0_ps(R0):
     f_As = np.linspace(0,1,201)
     return [[p[-1] for p in get_Js(f_A, beta=R0*gamma_def, track_vars=True)[4:7]] for f_A in f_As]
+
+def parallelize_f_A_nu_ps(nu):
+    f_As = np.linspace(0,1,201)
+    return [[p[-1] for p in get_Js(f_A, nu=nu/365, track_vars=True)[4:7]] for f_A in f_As]
 
 
 
@@ -458,6 +462,9 @@ if __name__ == '__main__':
         np.save('/scratch/gpfs/arisf/sim_results/Cs.npy', Cs) ### change file path
 
 
-        ps = pool.map(parallelize_ps, R0s)
-        np.save('/scratch/gpfs/arisf/sim_results/ps.npy', ps) ### change file path
+        f_A_R0_ps = pool.map(parallelize_f_A_R0_ps, R0s)
+        np.save('/scratch/gpfs/arisf/sim_results/f_A_R0_ps.npy', f_A_R0_ps) ### change file path
+
+        f_A_nu_ps = pool.map(parallelize_f_A_nu_ps, nus)
+        np.save('/scratch/gpfs/arisf/sim_results/f_A_nu_ps.npy', f_A_nu_ps) ### change file path
 

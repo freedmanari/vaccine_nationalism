@@ -10,4 +10,4 @@ Figures
 
 Scripts
 - vaccine_nationalism.ipynb, main script, can run all simulations and make all figures
-- get_sim_results.py, optional script to run long computations with parallelization on HPC, saves about 30-40 hours of computation
+- get_sim_results.py, optional script to run long computations with parallelization on HPC
