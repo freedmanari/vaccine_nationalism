@@ -102,8 +102,8 @@ def model(y, t,
     dpA = rA * pw
     dpB = rB * pw
     
-    dJ_A = pw_init * Iw_wA + sum(A_weights * (IA_wAs + IA_vAs)) + sum(B_weights * (IB_wAs + IB_vAs))
-    dJ_B = pw_init * Iw_wB + sum(A_weights * (IA_wBs + IA_vBs)) + sum(B_weights * (IB_wBs + IB_vBs))
+    dJ_A = pw_init * (dIw_wA+gamma*Iw_wA) + sum(A_weights * (dIA_wAs+gamma*IA_wAs + dIA_vAs+gamma*IA_vAs)) + sum(B_weights * (dIB_wAs+gamma*IB_wAs + dIB_vAs+gamma*IB_vAs))
+    dJ_B = pw_init * (dIw_wB+gamma*Iw_wB) + sum(A_weights * (dIA_wBs+gamma*IA_wBs + dIA_vBs+gamma*IA_vBs)) + sum(B_weights * (dIB_wBs+gamma*IB_wBs + dIB_vBs+gamma*IB_vBs))
     
     return np.concatenate(([dSw_1A, dSw_2A, dIw_wA, dRw_A,
                             dSw_1B, dSw_2B, dIw_wB, dRw_B,
