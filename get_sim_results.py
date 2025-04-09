@@ -122,7 +122,7 @@ def get_Js(f_A, f_B=f_B_def,
            sigma=sigma_def, mu=mu_def, phi=None,
            nu=nu_def, eta=eta_def,
            pop_size=pop_size_def, epsilon=epsilon_def,
-           tstep=7, tsteps=1000, ts_per_tstep=1, track_vars=False):
+           tstep=7, tsteps=2000, ts_per_tstep=1, track_vars=False):
     tstep_ts = np.linspace(0, tsteps * tstep, tsteps + 1)
     all_ts = np.linspace(0, tsteps * tstep, tsteps * ts_per_tstep + 1)
     init = 1 / pop_size
@@ -230,8 +230,8 @@ def get_Js(f_A, f_B=f_B_def,
         y0 = list(odes[-1])
         pw_init = y0[8]
 
-        ### there was enough evolutionary potential in country A last timestep for variant to possibly emerge in this timestep
-        ### keeps track of new set of variables in scenario where variant emerges this timestep in country A
+        ### there was enough evolutionary potential in Country A last timestep for variant to possibly emerge in this timestep
+        ### keeps track of new set of variables in scenario where variant emerges this timestep in Country A
         if odes[-1,9] - odes[0,9] > epsilon:
             if track_vars:
                 SA_1As = np.append(SA_1As, np.transpose([Sw_1A]), 1)
@@ -248,7 +248,7 @@ def get_Js(f_A, f_B=f_B_def,
 
                 SA_1As[-1,-1] -= init
                 if SA_1As[-1,-1] < 0:
-                    raise Exception('Not enough susceptibles in country A for variant to emerge')
+                    raise Exception('Not enough susceptibles in Country A for variant to emerge')
 
                 y0[13:(13 + 10*kA)] = \
                     np.concatenate((SA_1As[-1], SA_2As[-1], IA_wAs[-1], IA_vAs[-1], RA_As[-1],
@@ -265,8 +265,8 @@ def get_Js(f_A, f_B=f_B_def,
             kA += 1
             A_weights.append(odes[-1,9] - odes[0,9])
 
-        ### there was enough evolutionary potential in country B last timestep for variant to possibly emerge in this timestep
-        ### keeps track of new set of variables in scenario where variant emerges this timestep in country B
+        ### there was enough evolutionary potential in Country B last timestep for variant to possibly emerge in this timestep
+        ### keeps track of new set of variables in scenario where variant emerges this timestep in Country B
         if odes[-1,10] - odes[0,10] > epsilon:
             if track_vars:
                 SB_1As = np.append(SB_1As, np.transpose([Sw_1A]), 1)
@@ -283,7 +283,7 @@ def get_Js(f_A, f_B=f_B_def,
                 
                 SB_1Bs[-1,-1] -= init
                 if SB_1Bs[-1,-1] < 0:
-                    raise Exception('Not enough susceptibles in country B for variant to emerge')
+                    raise Exception('Not enough susceptibles in Country B for variant to emerge')
 
                 y0[(13 + 10*kA):(13 + 10*kA + 10*kB)] = \
                     np.concatenate((SB_1As[-1], SB_2As[-1], IB_wAs[-1], IB_vAs[-1], RB_As[-1],
@@ -315,15 +315,13 @@ def get_Js(f_A, f_B=f_B_def,
 
 ### gets raw infection costs over time J_A and J_B, then accumulates them with discount rate delta and
 ### prosociality factor rho (or set of multiple deltas/rhos) to get true costs C_A and C_B.
-### approx_inf_t says whether an approximation is made to calculate C_A and C_B into infinite time,
-### assuming equations have gone to equilibrium by the end of the simulation and will continue to be discounted at rate delta
 def get_Cs(f_A, f_B=f_B_def,
            delta=delta_def, rho=rho_def,
            beta=beta_def, gamma=gamma_def, lambd=lambda_def,
            sigma=sigma_def, mu=mu_def, phi=None,
            nu=nu_def, eta=eta_def,
            pop_size=pop_size_def, epsilon=epsilon_def,
-           tstep=7, tsteps=2000, ts_per_tstep=1, approx_inf_t=True, approx_frac=.1):
+           tstep=7, tsteps=2000, ts_per_tstep=1):
     
     ts, J_A, J_B = get_Js(f_A, f_B,
                           beta, gamma, lambd,
@@ -333,17 +331,10 @@ def get_Cs(f_A, f_B=f_B_def,
                           tstep, tsteps, ts_per_tstep, track_vars=False)
     
     def calc_C_A(delt, rh):
-        C_A = sum(np.exp(-delt*ts) * ((1-rh) * J_A + rh * J_B))
-        if approx_inf_t:
-            C_A += np.exp(-delt*(ts[-1]+tstep)) / (1 - np.exp(-delt*tstep)) * \
-                   np.mean((1-rh) * J_A[-int(approx_frac * len(ts)):] + rh * J_B[-int(approx_frac * len(ts)):])
-        return C_A
+        return sum(np.exp(-delt*ts) * ((1-rh) * J_A + rh * J_B))
+    
     def calc_C_B(delt, rh):
-        C_B = sum(np.exp(-delt*ts) * ((1-rh) * J_B + rh * J_A))
-        if approx_inf_t:
-            C_B += np.exp(-delt*(ts[-1]+tstep)) / (1 - np.exp(-delt*tstep)) * \
-                   np.mean((1-rh) * J_B[-int(approx_frac * len(ts)):] + rh * J_A[-int(approx_frac * len(ts)):])
-        return C_B
+        return sum(np.exp(-delt*ts) * ((1-rh) * J_B + rh * J_A))
     
     if isinstance(delta, (float,int)):
         if isinstance(rho, (float,int)):
@@ -363,7 +354,7 @@ def get_C_A(f_A, f_B=f_B_def,
             sigma=sigma_def, mu=mu_def, phi=None,
             nu=nu_def, eta=eta_def,
             pop_size=pop_size_def, epsilon=epsilon_def,
-            tstep=7, tsteps=2000, ts_per_tstep=1, approx_inf_t=True, approx_frac=.1):
+            tstep=7, tsteps=2000, ts_per_tstep=1):
     
     ts, J_A, J_B = get_Js(f_A, f_B,
                           beta, gamma, lambd,
@@ -373,12 +364,8 @@ def get_C_A(f_A, f_B=f_B_def,
                           tstep, tsteps, ts_per_tstep, track_vars=False)
     
     def calc_C_A(delt, rh):
-        C_A = sum(np.exp(-delt*ts) * ((1-rh) * J_A + rh * J_B))
-        if approx_inf_t:
-            C_A += np.exp(-delt*(ts[-1]+tstep)) / (1 - np.exp(-delt*tstep)) * \
-                   np.mean((1-rh) * J_A[-int(approx_frac * len(ts)):] + rh * J_B[-int(approx_frac * len(ts)):])
-        return C_A
-    
+        return sum(np.exp(-delt*ts) * ((1-rh) * J_A + rh * J_B))
+        
     if isinstance(delta, (float,int)):
         if isinstance(rho, (float,int)):
             return calc_C_A(delta, rho)
@@ -416,6 +403,10 @@ def parallelize_nu_delta_f_A_mins(nu):
     deltas = np.linspace(.001,.2,200)
     f_As = np.sort(np.append(np.linspace(.001,.451,10), np.linspace(.049,.499,10)))
     return f_As[np.argmin([get_C_A(f_A, delta=deltas/365, nu=nu/365) for f_A in f_As], axis=0)]
+def parallelize_nu_delta_f_A_min_low_sigmas(nu):
+    deltas = np.linspace(.001,.2,200)
+    f_As = np.sort(np.append(np.linspace(.001,.451,10), np.linspace(.049,.499,10)))
+    return f_As[np.argmin([get_C_A(f_A, delta=deltas/365, nu=nu/365, sigma=.9) for f_A in f_As], axis=0)]
 
 
 def parallelize_Cs(f_B):
@@ -455,6 +446,8 @@ if __name__ == '__main__':
         nus = np.linspace(.5,2.5,201)
         nu_delta_f_A_mins = np.transpose(pool.map(parallelize_nu_delta_f_A_mins, nus))
         np.save('/scratch/gpfs/arisf/sim_results/nu_delta_f_A_mins.npy', nu_delta_f_A_mins) ### change file path
+        nu_delta_f_A_min_low_sigmas = np.transpose(pool.map(parallelize_nu_delta_f_A_min_low_sigmas, nus))
+        np.save('/scratch/gpfs/arisf/sim_results/nu_delta_f_A_min_low_sigmas.npy', nu_delta_f_A_min_low_sigmas) ### change file path
 
 
         f_Bs = np.linspace(0,1,201)
