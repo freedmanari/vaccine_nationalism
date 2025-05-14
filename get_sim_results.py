@@ -423,6 +423,24 @@ def parallelize_f_A_nu_ps(nu):
     return [[p[-1] for p in get_Js(f_A, nu=nu/365, track_vars=True)[4:7]] for f_A in f_As]
 
 
+def parallelize_f_A_R0_pw_low_mus(R0):
+    f_As = np.linspace(0,1,201)
+    return [get_Js(f_A, beta=R0*gamma_def, mu=1, track_vars=True)[4][-1] for f_A in f_As]
+
+def parallelize_f_A_nu_pw_low_mus(nu):
+    f_As = np.linspace(0,1,201)
+    return [get_Js(f_A, nu=nu/365, mu=1, track_vars=True)[4][-1] for f_A in f_As]
+
+def parallelize_f_A_R0_pw_high_mus(R0):
+    f_As = np.linspace(0,1,201)
+    return [get_Js(f_A, beta=R0*gamma_def, mu=5, track_vars=True)[4][-1] for f_A in f_As]
+
+def parallelize_f_A_nu_pw_high_mus(nu):
+    f_As = np.linspace(0,1,201)
+    return [get_Js(f_A, nu=nu/365, mu=5, track_vars=True)[4][-1] for f_A in f_As]
+
+
+
 
 
 
@@ -457,7 +475,16 @@ if __name__ == '__main__':
 
         f_A_R0_ps = pool.map(parallelize_f_A_R0_ps, R0s)
         np.save('/scratch/gpfs/arisf/sim_results/f_A_R0_ps.npy', f_A_R0_ps) ### change file path
-
         f_A_nu_ps = pool.map(parallelize_f_A_nu_ps, nus)
         np.save('/scratch/gpfs/arisf/sim_results/f_A_nu_ps.npy', f_A_nu_ps) ### change file path
+
+        f_A_R0_pw_low_mus = pool.map(parallelize_f_A_R0_pw_low_mus, R0s)
+        np.save('/scratch/gpfs/arisf/sim_results/f_A_R0_pw_low_mus.npy', f_A_R0_pw_low_mus) ### change file path
+        f_A_nu_pw_low_mus = pool.map(parallelize_f_A_nu_pw_low_mus, nus)
+        np.save('/scratch/gpfs/arisf/sim_results/f_A_nu_pw_low_mus.npy', f_A_nu_pw_low_mus) ### change file path
+
+        f_A_R0_pw_high_mus = pool.map(parallelize_f_A_R0_pw_high_mus, R0s)
+        np.save('/scratch/gpfs/arisf/sim_results/f_A_R0_pw_high_mus.npy', f_A_R0_pw_high_mus) ### change file path
+        f_A_nu_pw_high_mus = pool.map(parallelize_f_A_nu_pw_high_mus, nus)
+        np.save('/scratch/gpfs/arisf/sim_results/f_A_nu_pw_high_mus.npy', f_A_nu_pw_high_mus) ### change file path
 
